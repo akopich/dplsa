@@ -31,7 +31,7 @@ object SimplePLSAJob {
         val rawDocuments = sc.parallelize(Seq("a b a", "x y y z", "a b z x ").map(_.split(" ").toSeq))
 
         val numberOfTopics = 2
-        val numberOfIterations = 100
+        val numberOfIterations = 10
 
         val plsa = new PLSA(sc , numberOfTopics,numberOfIterations, new Random())
 
