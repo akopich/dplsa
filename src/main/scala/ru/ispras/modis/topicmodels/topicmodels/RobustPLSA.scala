@@ -30,7 +30,7 @@ import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDis
  * @param eps   weight of noise
  * @param computePpx boolean. If true, model computes perplexity and prints it puts in the log at INFO level. it takes some time and memory
  */
-class RobustPLSA(@transient private val sc: SparkContext,
+class RobustPLSA(@transient protected val sc: SparkContext,
                  protected val numberOfTopics: Int,
                  protected val numberOfIterations: Int,
                  protected val random: Random,
@@ -43,10 +43,10 @@ class RobustPLSA(@transient private val sc: SparkContext,
     @transient protected val logger = Logger(LoggerFactory getLogger "Robust PLSA")
 
     def infer(documents: RDD[Document]): (RDD[TopicDistribution], Broadcast[Array[Array[Float]]]) = {
-        val alphabetSize = documents.first().alphabetSize
-        val collectionLength = documents.map(_.tokens.activeSize).reduce(_ + _)
+        val alphabetSize = getAlphabetSize(documents)
+        val collectionLength = getCollectionLength(documents)
 
-        val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
+        val topicBC = getInitialTopics(alphabetSize)
         val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps, documentOverTopicRegularizer))
 
         val background = (0 until alphabetSize).map(j => 1f / alphabetSize).toArray

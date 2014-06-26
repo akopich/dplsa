@@ -6,5 +6,5 @@ package ru.ispras.modis.topicmodels.topicmodels.regulaizers
 class UniformTopicRegularizer extends TopicsRegularizer {
     override def apply(topics: Array[Array[Float]]): Float = 0
 
-    override def regilarize(topics: Array[Array[Float]], oldTopics: Array[Array[Float]]): Unit = {}
+    override def regularize(topics: Array[Array[Float]], oldTopics: Array[Array[Float]]): Unit = {}
 }

@@ -46,5 +46,6 @@ object SimplePLSAJob {
         val (theta, phi) = plsa.infer(docs)
 
         theta.collect().foreach(x => println(x.probabilities.toList))
+        phi.value.foreach(x => println(x.toList))
     }
 }

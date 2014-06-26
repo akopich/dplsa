@@ -15,7 +15,7 @@ import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDis
 /**
  * Created by valerij on 6/25/14.
  */
-class PLSA(@transient private val sc: SparkContext,
+class PLSA(@transient protected val sc: SparkContext,
            protected val numberOfTopics: Int,
            private val numberOfIterations: Int,
            protected val random: Random,
@@ -26,11 +26,11 @@ class PLSA(@transient private val sc: SparkContext,
     @transient protected val logger = Logger(LoggerFactory getLogger "PLSA")
 
     def infer(documents: RDD[Document]): (RDD[TopicDistribution], Broadcast[Array[Array[Float]]]) = {
-        val alphabetSize = documents.first().alphabetSize
+        val alphabetSize = getAlphabetSize(documents)
 
-        val collectionLength = documents.map(_.tokens.activeSize).reduce(_ + _)
+        val collectionLength = getCollectionLength(documents)
 
-        val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
+        val topicBC = getInitialTopics(alphabetSize)
 
         val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics, documentOverTopicRegularizer))
 
