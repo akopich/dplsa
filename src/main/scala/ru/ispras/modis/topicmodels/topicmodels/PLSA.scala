@@ -28,11 +28,13 @@ class PLSA(@transient private val sc: SparkContext,
     def infer(documents: RDD[Document]): (RDD[TopicDistribution], Broadcast[Array[Array[Float]]]) = {
         val alphabetSize = documents.first().alphabetSize
 
+        val collectionLength = documents.map(_.tokens.activeSize).reduce(_ + _)
+
         val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
 
         val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics, documentOverTopicRegularizer))
 
-        val (result, topics) = newIteration(parameters, topicBC, alphabetSize, 0)
+        val (result, topics) = newIteration(parameters, topicBC, alphabetSize, collectionLength, 0)
 
         (result.map(p => new TopicDistribution(p.theta.map(_.toDouble).toArray)), topics)
     }
@@ -41,11 +43,12 @@ class PLSA(@transient private val sc: SparkContext,
     private def newIteration(parameters: RDD[DocumentParameters],
                              topicsBC: Broadcast[Array[Array[Float]]],
                              alphabetSize: Int,
+                             collectionLength: Int,
                              numberOfIteration: Int): (RDD[DocumentParameters], Broadcast[Array[Array[Float]]]) = {
 
         if (computePpx) {
             logger.info("Interation number " + numberOfIteration)
-            logger.info("Perplexity=" + perplexity(topicsBC, parameters))
+            logger.info("Perplexity=" + perplexity(topicsBC, parameters, collectionLength))
         }
         if (numberOfIteration == numberOfIterations) {
             (parameters, topicsBC)
@@ -57,7 +60,7 @@ class PLSA(@transient private val sc: SparkContext,
 
             parameters.unpersist()
 
-            newIteration(newParameters, sc.broadcast(newTopics), alphabetSize, numberOfIteration + 1)
+            newIteration(newParameters, sc.broadcast(newTopics), alphabetSize, collectionLength, numberOfIteration + 1)
         }
     }
 
@@ -67,7 +70,7 @@ class PLSA(@transient private val sc: SparkContext,
             (thatOne, otherOne) => thatOne + otherOne)
     }
 
-    private def perplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[DocumentParameters]) = {
-        generalizedPerplexity(topicsBC, parameters, par => (word, num) => num * math.log(probabilityOfWordGivenTopic(word, par, topicsBC)).toFloat)
+    private def perplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[DocumentParameters], collectionLength: Int) = {
+        generalizedPerplexity(topicsBC, parameters, collectionLength, par => (word, num) => num * math.log(probabilityOfWordGivenTopic(word, par, topicsBC)).toFloat)
     }
 }

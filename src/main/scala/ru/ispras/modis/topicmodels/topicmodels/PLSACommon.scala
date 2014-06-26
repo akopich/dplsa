@@ -14,10 +14,10 @@ trait PLSACommon[DocumentParameterType <: DocumentParameters, GlobalParameterTyp
     protected val random: Random
     protected val topicRegularizer: TopicsRegularizer
 
-    protected def generalizedPerplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[DocumentParameterType], wordGivenModel: DocumentParameterType => (Int, Short) => Float) = {
+    protected def generalizedPerplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[DocumentParameterType], collectionLength: Int, wordGivenModel: DocumentParameterType => (Int, Short) => Float) = {
         math.exp(-(parameters.aggregate(0f)(
             (thatOne, otherOne) => thatOne + singleDocumentLikelihood(otherOne, topicsBC, wordGivenModel(otherOne)),
-            (thatOne, otherOne) => thatOne + otherOne) + topicRegularizer(topicsBC.value)) / parameters.count
+            (thatOne, otherOne) => thatOne + otherOne) + topicRegularizer(topicsBC.value)) / collectionLength
         )
     }
 

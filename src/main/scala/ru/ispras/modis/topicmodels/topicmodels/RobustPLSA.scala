@@ -44,13 +44,14 @@ class RobustPLSA(@transient private val sc: SparkContext,
 
     def infer(documents: RDD[Document]): (RDD[TopicDistribution], Broadcast[Array[Array[Float]]]) = {
         val alphabetSize = documents.first().alphabetSize
+        val collectionLength = documents.map(_.tokens.activeSize).reduce(_ + _)
 
         val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
         val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps, documentOverTopicRegularizer))
 
         val background = (0 until alphabetSize).map(j => 1f / alphabetSize).toArray
 
-        val (result, topics) = newIteration(parameters, topicBC, background, alphabetSize, 0)
+        val (result, topics) = newIteration(parameters, topicBC, background, alphabetSize, collectionLength, 0)
 
         (result.map(p => new TopicDistribution(p.theta.map(_.toDouble).toArray)), topics)
     }
@@ -60,15 +61,14 @@ class RobustPLSA(@transient private val sc: SparkContext,
                              topicsBC: Broadcast[Array[Array[Float]]],
                              background: Array[Float],
                              alphabetSize: Int,
+                             collectionLength: Int,
                              numberOfIteration: Int): (RDD[RobustDocumentParameters], Broadcast[Array[Array[Float]]]) = {
 
         if (computePpx) {
             logger.info("Interation number " + numberOfIteration)
-            logger.info("Perplexity=" + perplexity(topicsBC, parameters, background))
+            logger.info("Perplexity=" + perplexity(topicsBC, parameters, background, collectionLength))
         }
-        if (numberOfIteration == numberOfIterations) {
-            (parameters, topicsBC)
-        }
+        if (numberOfIteration == numberOfIterations) (parameters, topicsBC)
         else {
             val newParameters = parameters.map(u => u.getNewTheta(topicsBC, background, eps, gamma)).cache()
             val globalParameters = getGlobalParameters(parameters, topicsBC, background, alphabetSize)
@@ -77,7 +77,7 @@ class RobustPLSA(@transient private val sc: SparkContext,
 
             parameters.unpersist()
 
-            newIteration(newParameters, sc.broadcast(newTopics), newBackground, alphabetSize, numberOfIteration + 1)
+            newIteration(newParameters, sc.broadcast(newTopics), newBackground, alphabetSize, collectionLength, numberOfIteration + 1)
         }
     }
 
@@ -93,8 +93,8 @@ class RobustPLSA(@transient private val sc: SparkContext,
     }
 
 
-    private def perplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[RobustDocumentParameters], background: Array[Float]) =
-        generalizedPerplexity(topicsBC, parameters,
+    private def perplexity(topicsBC: Broadcast[Array[Array[Float]]], parameters: RDD[RobustDocumentParameters], background: Array[Float], collectionLength: Int) =
+        generalizedPerplexity(topicsBC, parameters, collectionLength,
             par => (word, num) => num * math.log(probabilityOfWordGivenTopic(word, par, topicsBC) + gamma * background(word) + eps * par.noise(word) / (1 + eps + gamma)).toFloat)
 
 }
