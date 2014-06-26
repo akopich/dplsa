@@ -8,6 +8,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
 import ru.ispras.modis.topicmodels.documents.Numerator
 import ru.ispras.modis.topicmodels.topicmodels.PLSA
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{SymmetricDirichletDocumentOverTopicDistributionRegularizer, SymmetricDirichletTopicRegularizer}
 import ru.ispras.modis.topicmodels.utils.serialization.TObjectIntHashMapSerializer
 
 /**
@@ -33,7 +34,12 @@ object SimplePLSAJob {
         val numberOfTopics = 2
         val numberOfIterations = 10
 
-        val plsa = new PLSA(sc , numberOfTopics,numberOfIterations, new Random())
+        val plsa = new PLSA(sc,
+            numberOfTopics,
+            numberOfIterations,
+            new Random(),
+            new SymmetricDirichletDocumentOverTopicDistributionRegularizer(0.2f),
+            new SymmetricDirichletTopicRegularizer(0.2f))
 
         val docs = Numerator.numerate(rawDocuments, 0)
 

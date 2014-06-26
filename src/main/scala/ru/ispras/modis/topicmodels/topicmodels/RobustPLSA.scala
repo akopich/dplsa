@@ -10,6 +10,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.slf4j.LoggerFactory
 import ru.ispras.modis.topicmodels.documents.Document
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDistributionRegularizer, TopicsRegularizer, UniformDocumentOverTopicRegularizer, UniformTopicRegularizer}
 
 
 /**
@@ -33,9 +34,11 @@ class RobustPLSA(@transient private val sc: SparkContext,
                  protected val numberOfTopics: Int,
                  protected val numberOfIterations: Int,
                  protected val random: Random,
-                 private val gamma: Float = 0.0f, // background
-                 private val eps: Float = 0.00f,
-                 private val computePpx: Boolean = true) extends TopicModel with PLSACommon[RobustDocumentParameters, RobustGlobalParameters] with Logging with Serializable {
+                 private val documentOverTopicRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
+                 @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
+                 private val computePpx: Boolean = true,
+                 private val gamma: Float = 0.3f, // background
+                 private val eps: Float = 0.01f) extends TopicModel with PLSACommon[RobustDocumentParameters, RobustGlobalParameters] with Logging with Serializable {
 
     @transient protected val logger = Logger(LoggerFactory getLogger "Robust PLSA")
 
@@ -43,7 +46,7 @@ class RobustPLSA(@transient private val sc: SparkContext,
         val alphabetSize = documents.first().alphabetSize
 
         val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
-        val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps))
+        val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps, documentOverTopicRegularizer))
 
         val background = (0 until alphabetSize).map(j => 1f / alphabetSize).toArray
 
@@ -68,10 +71,8 @@ class RobustPLSA(@transient private val sc: SparkContext,
         }
         else {
             val newParameters = parameters.map(u => u.getNewTheta(topicsBC, background, eps, gamma)).cache()
-
             val globalParameters = getGlobalParameters(parameters, topicsBC, background, alphabetSize)
-
-            val newTopics = getTopics(newParameters, topicsBC, alphabetSize, globalParameters)
+            val newTopics = getTopics(newParameters, alphabetSize, topicsBC.value, globalParameters)
             val newBackground = getNewBackgound(globalParameters)
 
             parameters.unpersist()

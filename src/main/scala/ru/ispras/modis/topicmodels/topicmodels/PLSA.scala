@@ -9,6 +9,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.slf4j.LoggerFactory
 import ru.ispras.modis.topicmodels.documents.Document
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDistributionRegularizer, TopicsRegularizer, UniformDocumentOverTopicRegularizer, UniformTopicRegularizer}
 
 
 /**
@@ -18,6 +19,8 @@ class PLSA(@transient private val sc: SparkContext,
            protected val numberOfTopics: Int,
            private val numberOfIterations: Int,
            protected val random: Random,
+           private val documentOverTopicRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
+           @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
            private val computePpx: Boolean = true) extends TopicModel with PLSACommon[DocumentParameters, GlobalParameters] with Logging with Serializable {
 
     @transient protected val logger = Logger(LoggerFactory getLogger "PLSA")
@@ -27,7 +30,7 @@ class PLSA(@transient private val sc: SparkContext,
 
         val topicBC = sc.broadcast(getInitialTopics(alphabetSize))
 
-        val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics))
+        val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics, documentOverTopicRegularizer))
 
         val (result, topics) = newIteration(parameters, topicBC, alphabetSize, 0)
 
@@ -50,7 +53,7 @@ class PLSA(@transient private val sc: SparkContext,
         else {
             val newParameters = parameters.map(u => u.getNewTheta(topicsBC)).cache()
             val globalParameters = getGlobalParameters(parameters, topicsBC, alphabetSize)
-            val newTopics = getTopics(newParameters, topicsBC, alphabetSize, globalParameters)
+            val newTopics = getTopics(newParameters, alphabetSize, topicsBC.value, globalParameters)
 
             parameters.unpersist()
 

@@ -3,6 +3,7 @@ package ru.ispras.modis.topicmodels.topicmodels
 import breeze.linalg.SparseVector
 import org.apache.spark.broadcast.Broadcast
 import ru.ispras.modis.topicmodels.documents.Document
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.DocumentOverTopicDistributionRegularizer
 import ru.ispras.modis.topicmodels.utils.serialization.SparseVectorFasterSum
 
 /**
@@ -18,7 +19,8 @@ import ru.ispras.modis.topicmodels.utils.serialization.SparseVectorFasterSum
  * @param noise noisiness of words
  */
 class RobustDocumentParameters(document: Document, theta: Array[Float],
-                               val noise: SparseVector[Float]) extends DocumentParameters(document, theta) {
+                               val noise: SparseVector[Float],
+                               regularizer: DocumentOverTopicDistributionRegularizer) extends DocumentParameters(document, theta, regularizer) {
 
     protected def getZ(topics: Broadcast[Array[Array[Float]]], background: Array[Float], eps: Float, gamma: Float) = {
         val topicsValue = topics.value
@@ -66,7 +68,7 @@ class RobustDocumentParameters(document: Document, theta: Array[Float],
         super.assignNewTheta(topicsBC, Z)
 
         val newNoise: SparseVector[Float] = getNoise(eps, Z)
-        new RobustDocumentParameters(document, theta, newNoise)
+        new RobustDocumentParameters(document, theta, newNoise, regularizer)
     }
 
 
@@ -84,12 +86,12 @@ object RobustDocumentParameters extends SparseVectorFasterSum {
      * @param eps weight of noise
      * @return new DocumentParameters
      */
-    def apply(document: Document, numberOfTopics: Int, gamma: Float, eps: Float) = {
+    def apply(document: Document, numberOfTopics: Int, gamma: Float, eps: Float, regularizer: DocumentOverTopicDistributionRegularizer) = {
         val wordsNum = sumSparseVector(document.tokens)
         val noise = document.tokens.mapActiveValues(word => 1f / wordsNum)
 
-        val documentParameters: DocumentParameters = DocumentParameters(document, numberOfTopics)
-        new RobustDocumentParameters(document, documentParameters.theta, noise)
+        val documentParameters: DocumentParameters = DocumentParameters(document, numberOfTopics, regularizer)
+        new RobustDocumentParameters(document, documentParameters.theta, noise, regularizer)
     }
 
 }

@@ -3,12 +3,13 @@ package ru.ispras.modis.topicmodels.topicmodels
 import breeze.linalg.SparseVector
 import org.apache.spark.broadcast.Broadcast
 import ru.ispras.modis.topicmodels.documents.Document
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.DocumentOverTopicDistributionRegularizer
 import ru.ispras.modis.topicmodels.utils.serialization.SparseVectorFasterSum
 
 /**
  * Created by valerij on 6/25/14.
  */
-class DocumentParameters(val document: Document, val theta: Array[Float]) extends Serializable {
+class DocumentParameters(val document: Document, val theta: Array[Float], private val regularizer: DocumentOverTopicDistributionRegularizer) extends Serializable {
     protected def getZ(topics: Broadcast[Array[Array[Float]]]) = {
         val topicsValue = topics.value
         val numberOfTopics = topicsValue.size
@@ -52,10 +53,12 @@ class DocumentParameters(val document: Document, val theta: Array[Float]) extend
             })
             array
         }
+        regularizer.regularize(newTheta, theta)
 
         val newThetaSum = newTheta.sum
 
         forWithIndex(newTheta)((wordsNum, topicNum) => theta(topicNum) = wordsNum / newThetaSum)
+
     }
 
     def getNewTheta(topicsBC: Broadcast[Array[Array[Float]]]) = {
@@ -65,14 +68,16 @@ class DocumentParameters(val document: Document, val theta: Array[Float]) extend
         this
     }
 
+    def priorThetaLogProbability = regularizer(theta)
+
 }
 
 
 object DocumentParameters extends SparseVectorFasterSum {
 
-    def apply(document: Document, numberOfTopics: Int) = {
+    def apply(document: Document, numberOfTopics: Int, regularizer: DocumentOverTopicDistributionRegularizer) = {
         val theta = getTheta(numberOfTopics)
-        new DocumentParameters(document, theta)
+        new DocumentParameters(document, theta, regularizer)
     }
 
     private def getTheta(numberOfTopics: Int) = {
