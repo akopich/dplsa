@@ -69,7 +69,7 @@ object RobustGlobalParameters {
      * @return  new GlobalParameters
      */
     def apply(topicNum: Int, alphabetSize: Int) = {
-        val topicWords = (0 until topicNum).map(i => new Array[Float](alphabetSize)).toArray
+        val topicWords = Array.ofDim[Float](topicNum, alphabetSize)
         val backgroundWords = new Array[Float](alphabetSize)
         new RobustGlobalParameters(topicWords, backgroundWords, alphabetSize)
     }
