@@ -3,6 +3,11 @@ package ru.ispras.modis.topicmodels.topicmodels
 import org.apache.spark.broadcast.Broadcast
 
 
+/**
+ * holds \Phi matrix
+ * @param topicWords
+ * @param alphabetSize
+ */
 class GlobalParameters(val topicWords: Array[Array[Float]], alphabetSize: Int) extends Serializable {
 
     /**

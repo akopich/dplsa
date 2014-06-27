@@ -6,7 +6,7 @@ import com.esotericsoftware.kryo.Kryo
 import gnu.trove.map.hash.TObjectIntHashMap
 import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
-import ru.ispras.modis.topicmodels.documents.Numerator
+import ru.ispras.modis.topicmodels.documents.Enumerator
 import ru.ispras.modis.topicmodels.topicmodels.PLSA
 import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{SymmetricDirichletDocumentOverTopicDistributionRegularizer, SymmetricDirichletTopicRegularizer}
 import ru.ispras.modis.topicmodels.utils.serialization.TObjectIntHashMapSerializer
@@ -41,7 +41,7 @@ object SimplePLSAJob {
             new SymmetricDirichletDocumentOverTopicDistributionRegularizer(0.2f),
             new SymmetricDirichletTopicRegularizer(0.2f))
 
-        val docs = Numerator.numerate(rawDocuments, 0)
+        val docs = Enumerator.numerate(rawDocuments, 0)
 
         val (theta, phi) = plsa.infer(docs)
 

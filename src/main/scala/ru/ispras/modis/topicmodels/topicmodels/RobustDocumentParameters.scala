@@ -13,10 +13,12 @@ import ru.ispras.modis.topicmodels.utils.serialization.SparseVectorFasterSum
  * Time: 22:05
  */
 /**
- * the class contains document parameter
+ * the class contains document parameter in Robust PLSA model
+ *
  * @param document
  * @param theta the distribution over topics
  * @param noise noisiness of words
+ * @param regularizer
  */
 class RobustDocumentParameters(document: Document, theta: Array[Float],
                                val noise: SparseVector[Float],

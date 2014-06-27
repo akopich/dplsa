@@ -15,11 +15,23 @@ import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDis
 /**
  * Created by valerij on 6/25/14.
  */
+
+/**
+ *
+ * distributed topic modeling via PLSA (Hofmann (1999), Vorontsov, Potapenko (2014) )
+ * @param sc  spark context
+ * @param numberOfTopics number of topics
+ * @param numberOfIterations number of iterations
+ * @param random java.util.Random need for initialisation
+ * @param documentOverTopicDistributionRegularizer
+ * @param topicRegularizer
+ * @param computePpx boolean. If true, model computes perplexity and prints it puts in the log at INFO level. it takes some time and memory
+ */
 class PLSA(@transient protected val sc: SparkContext,
            protected val numberOfTopics: Int,
            private val numberOfIterations: Int,
            protected val random: Random,
-           private val documentOverTopicRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
+           private val documentOverTopicDistributionRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
            @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
            private val computePpx: Boolean = true) extends TopicModel with PLSACommon[DocumentParameters, GlobalParameters] with Logging with Serializable {
 
@@ -32,7 +44,7 @@ class PLSA(@transient protected val sc: SparkContext,
 
         val topicBC = getInitialTopics(alphabetSize)
 
-        val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics, documentOverTopicRegularizer))
+        val parameters = documents.map(doc => DocumentParameters(doc, numberOfTopics, documentOverTopicDistributionRegularizer))
 
         val (result, topics) = newIteration(parameters, topicBC, alphabetSize, collectionLength, 0)
 

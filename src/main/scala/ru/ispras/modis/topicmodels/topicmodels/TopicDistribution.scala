@@ -7,7 +7,7 @@ package ru.ispras.modis.topicmodels.topicmodels
  * Time: 5:55 PM
  */
 /**
- * class contains the distribution of a document over topics -- theta
+ * class contains the distribution of a document over topics -- \Theta matrix row
  * @param probabilities array of topic weight
  */
 class TopicDistribution(val probabilities: Array[Double]) extends Serializable {

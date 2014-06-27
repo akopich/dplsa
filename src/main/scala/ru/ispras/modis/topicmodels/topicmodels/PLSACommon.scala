@@ -6,12 +6,12 @@ import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import ru.ispras.modis.topicmodels.documents.Document
-import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{ShiftMatrix, TopicsRegularizer}
+import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{MatrixInPlaceModification, TopicsRegularizer}
 
 /**
  * Created by valerij on 6/25/14.
  */
-trait PLSACommon[DocumentParameterType <: DocumentParameters, GlobalParameterType <: GlobalParameters] extends ShiftMatrix {
+trait PLSACommon[DocumentParameterType <: DocumentParameters, GlobalParameterType <: GlobalParameters] extends MatrixInPlaceModification {
     protected val numberOfTopics: Int
     protected val random: Random
     protected val topicRegularizer: TopicsRegularizer
@@ -32,7 +32,7 @@ trait PLSACommon[DocumentParameterType <: DocumentParameters, GlobalParameterTyp
         parameter.document.tokens.mapActivePairs(wordGivenModel).sum + parameter.priorThetaLogProbability
     }
 
-    def probabilityOfWordGivenTopic(word: Int, parameter: DocumentParameters, topicsBC: Broadcast[Array[Array[Float]]]) = {
+    protected def probabilityOfWordGivenTopic(word: Int, parameter: DocumentParameters, topicsBC: Broadcast[Array[Array[Float]]]) = {
         var underLog = 0f
         for (topic <- 0 until numberOfTopics) underLog += parameter.theta(topic) * topicsBC.value(topic)(word)
         underLog

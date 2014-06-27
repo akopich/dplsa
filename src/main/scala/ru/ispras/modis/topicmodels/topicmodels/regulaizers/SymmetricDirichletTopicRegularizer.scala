@@ -4,7 +4,12 @@ package ru.ispras.modis.topicmodels.topicmodels.regulaizers
 /**
  * Created by valerij on 6/26/14.
  */
-class SymmetricDirichletTopicRegularizer(protected val alpha: Float) extends TopicsRegularizer with ShiftMatrix with SymmetricDirichletHelper {
+
+/**
+ *
+ * @param alpha - parmeter of Dirichlet distribution
+ */
+class SymmetricDirichletTopicRegularizer(protected val alpha: Float) extends TopicsRegularizer with MatrixInPlaceModification with SymmetricDirichletHelper {
     override def apply(topics: Array[Array[Float]]): Float = topics.foldLeft(0f)((sum, x) => sum + dirichletLogLikelihood(x))
 
     override def regularize(topics: Array[Array[Float]], oldTopics: Array[Array[Float]]): Unit = {

@@ -21,20 +21,23 @@ import ru.ispras.modis.topicmodels.topicmodels.regulaizers.{DocumentOverTopicDis
  * To change this template use File | Settings | File Templates.
  */
 /**
- * distributed topic modeling
+ * distributed topic modeling via RobustPLSA (Hofmann (1999), Vorontsov, Potapenko (2014) )
+ *
  * @param sc  spark context
  * @param numberOfTopics number of topics
  * @param numberOfIterations number of iterations
  * @param random java.util.Random need for initialisation
+ * @param documentOverTopicDistributionRegularizer
+ * @param topicRegularizer
+ * @param computePpx boolean. If true, model computes perplexity and prints it puts in the log at INFO level. it takes some time and memory
  * @param gamma weight of background
  * @param eps   weight of noise
- * @param computePpx boolean. If true, model computes perplexity and prints it puts in the log at INFO level. it takes some time and memory
  */
 class RobustPLSA(@transient protected val sc: SparkContext,
                  protected val numberOfTopics: Int,
                  protected val numberOfIterations: Int,
                  protected val random: Random,
-                 private val documentOverTopicRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
+                 private val documentOverTopicDistributionRegularizer: DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
                  @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
                  private val computePpx: Boolean = true,
                  private val gamma: Float = 0.3f, // background
@@ -47,7 +50,7 @@ class RobustPLSA(@transient protected val sc: SparkContext,
         val collectionLength = getCollectionLength(documents)
 
         val topicBC = getInitialTopics(alphabetSize)
-        val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps, documentOverTopicRegularizer))
+        val parameters = documents.map(doc => RobustDocumentParameters(doc, numberOfTopics, gamma, eps, documentOverTopicDistributionRegularizer))
 
         val background = (0 until alphabetSize).map(j => 1f / alphabetSize).toArray
 

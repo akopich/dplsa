@@ -9,6 +9,13 @@ import ru.ispras.modis.topicmodels.utils.serialization.SparseVectorFasterSum
 /**
  * Created by valerij on 6/25/14.
  */
+
+/**
+ * the class contains document parameter in PLSA model
+ * @param document
+ * @param theta the distribution over topics
+ * @param regularizer
+ */
 class DocumentParameters(val document: Document, val theta: Array[Float], private val regularizer: DocumentOverTopicDistributionRegularizer) extends Serializable {
     protected def getZ(topics: Broadcast[Array[Array[Float]]]) = {
         val topicsValue = topics.value

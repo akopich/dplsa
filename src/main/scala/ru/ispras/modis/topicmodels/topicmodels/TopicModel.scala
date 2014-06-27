@@ -13,13 +13,13 @@ import ru.ispras.modis.topicmodels.documents.Document
  */
 
 /**
- * trait for topic modeling
+ * topic modeling interface
  */
 trait TopicModel {
     /**
      *
-     * @param documents  RDD[Document]
-     * @return (RDD[TopicDistribution], Broadcast[Array[Array[Float] ] ] ) -- a pair of theta (documents to topic) and phi (words to topics)
+     * @param documents  -- document collection
+     * @return a pair of theta (documents to topic) and phi (words to topics)
      */
     def infer(documents: RDD[Document]): (RDD[TopicDistribution], Broadcast[Array[Array[Float]]])
 }
