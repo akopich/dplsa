@@ -18,7 +18,7 @@ resolvers ++= Seq(
 resolvers +=
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "net.sf.trove4j" % "trove4j" % "3.0.3"
 
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
