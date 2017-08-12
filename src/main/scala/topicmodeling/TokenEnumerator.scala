@@ -19,7 +19,6 @@ package topicmodeling
 
 import breeze.linalg.SparseVector
 import breeze.util.Index
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd.RDD
 
 

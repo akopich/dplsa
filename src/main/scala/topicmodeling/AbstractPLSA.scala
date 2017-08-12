@@ -38,7 +38,7 @@ GlobalCounterType <: GlobalCounters]
                                         parameters: RDD[DocumentParameterType],
                                         collectionLength: Int,
                                         wordGivenModel: DocumentParameterType => (Int, Int) => Float) = {
-        math.exp(-(parameters.aggregate(0f)((thatOne, otherOne) =>
+        math.exp(-(parameters.treeAggregate(0f)((thatOne, otherOne) =>
             thatOne + singleDocumentLikelihood(otherOne, topicsBC, wordGivenModel(otherOne)),
             (thatOne, otherOne) => thatOne + otherOne) + topicRegularizer(topicsBC.value)) /
             collectionLength)

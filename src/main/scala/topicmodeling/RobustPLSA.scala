@@ -19,9 +19,10 @@ package topicmodeling
 
 import java.util.Random
 
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext
 import topicmodeling.regulaizers.{DocumentOverTopicDistributionRegularizer, TopicsRegularizer, UniformDocumentOverTopicRegularizer, UniformTopicRegularizer}
 
 
@@ -46,13 +47,12 @@ class RobustPLSA(@transient protected val sc: SparkContext,
                  private val documentOverTopicDistributionRegularizer:
                  DocumentOverTopicDistributionRegularizer =
                  new UniformDocumentOverTopicRegularizer,
-                 @transient protected val topicRegularizer: TopicsRegularizer =
-                 new UniformTopicRegularizer,
+                 @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
                  private val computePpx: Boolean = true,
                  private val gamma: Float = 0.3f,
                  private val eps: Float = 0.01f)
     extends AbstractPLSA[RobustDocumentParameters, RobustGlobalParameters, RobustGlobalCounters]
-    with Logging
+    with LazyLogging
     with Serializable {
 
 
@@ -117,8 +117,8 @@ class RobustPLSA(@transient protected val sc: SparkContext,
         Broadcast[Array[Float]]) = {
 
         if (computePpx) {
-            logInfo("Iteration number " + numberOfIteration)
-            logInfo("Perplexity=" + perplexity(topicsBC, parameters, backgroundBC, collectionLength))
+            logger.info("Iteration number " + numberOfIteration)
+            logger.info("Perplexity=" + perplexity(topicsBC, parameters, backgroundBC, collectionLength))
         }
         if (numberOfIteration == numberOfIterations) {
             (parameters, topicsBC, backgroundBC)
@@ -152,8 +152,7 @@ class RobustPLSA(@transient protected val sc: SparkContext,
                                   topics: Broadcast[Array[Array[Float]]],
                                   background: Broadcast[Array[Float]],
                                   alphabetSize: Int) = {
-        parameters.aggregate[RobustGlobalCounters](RobustGlobalCounters(numberOfTopics,
-            alphabetSize))(
+        parameters.treeAggregate(RobustGlobalCounters(numberOfTopics,alphabetSize))(
                 (thatOne, otherOne) =>
                     thatOne.add(otherOne, topics.value, background.value, eps, gamma, alphabetSize),
                 (thatOne, otherOne) =>

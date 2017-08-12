@@ -19,9 +19,10 @@ package topicmodeling
 
 import java.util.Random
 
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext
 import topicmodeling.regulaizers.{DocumentOverTopicDistributionRegularizer, TopicsRegularizer, UniformDocumentOverTopicRegularizer, UniformTopicRegularizer}
 
 
@@ -43,11 +44,10 @@ class PLSA(@transient protected val sc: SparkContext,
            protected val random: Random,
            private val documentOverTopicDistributionRegularizer:
            DocumentOverTopicDistributionRegularizer = new UniformDocumentOverTopicRegularizer,
-           @transient protected val topicRegularizer: TopicsRegularizer =
-           new UniformTopicRegularizer,
+           @transient protected val topicRegularizer: TopicsRegularizer = new UniformTopicRegularizer,
            private val computePpx: Boolean = true)
     extends AbstractPLSA[DocumentParameters, GlobalParameters, GlobalCounters]
-    with Logging
+    with LazyLogging
     with Serializable {
 
 
@@ -101,8 +101,8 @@ class PLSA(@transient protected val sc: SparkContext,
                              numberOfIteration: Int,
                              foldingIn: Boolean): (RDD[DocumentParameters], Broadcast[Array[Array[Float]]]) = {
         if (computePpx) {
-            logInfo("Iteration number " + numberOfIteration)
-            logInfo("Perplexity=" + perplexity(topicsBC, parameters, collectionLength))
+            logger.info("Iteration number " + numberOfIteration)
+            logger.info("Perplexity=" + perplexity(topicsBC, parameters, collectionLength))
         }
         if (numberOfIteration == numberOfIterations) {
             (parameters, topicsBC)
@@ -130,8 +130,7 @@ class PLSA(@transient protected val sc: SparkContext,
     private def getGlobalCounters(parameters: RDD[DocumentParameters],
                                   topics: Broadcast[Array[Array[Float]]],
                                   alphabetSize: Int) = {
-        parameters.aggregate[GlobalCounters](GlobalCounters(numberOfTopics,
-            alphabetSize))((thatOne, otherOne) => thatOne.add(otherOne, topics.value, alphabetSize),
+        parameters.treeAggregate(GlobalCounters(numberOfTopics, alphabetSize))((thatOne, otherOne) => thatOne.add(otherOne, topics.value, alphabetSize),
                 (thatOne, otherOne) => thatOne + otherOne)
     }
 
