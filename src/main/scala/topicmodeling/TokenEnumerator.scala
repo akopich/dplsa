@@ -34,7 +34,7 @@ class Document(val tokens: SparseVector[Int]) extends Serializable {
      *
      * @return number of different tokens in the collection
      */
-    def alphabetSize = tokens.length
+    def alphabetSize: Int = tokens.length
 }
 
 /**
@@ -56,7 +56,7 @@ class TokenEnumeration private[topicmodeling](private val alphabet: Index[String
 
         val words = wordsMap.keys.toArray.sorted
 
-        val tokens = new SparseVector[Int](words, words.map(word => wordsMap(word)), alphabet.size)
+        val tokens = new SparseVector[Int](words, words.map(wordsMap), alphabet.size)
         new Document(tokens)
     }
 }
@@ -73,7 +73,7 @@ class TokenEnumerator extends Serializable {
      *                           rareTokenThreshold times are omitted.
      *                           Default value: 2
      */
-    def setRareTokenThreshold(rareTokenThreshold: Int) = {
+    def setRareTokenThreshold(rareTokenThreshold: Int): TokenEnumerator = {
         this.rareTokenThreshold = rareTokenThreshold
         this
     }
@@ -89,8 +89,8 @@ class TokenEnumerator extends Serializable {
             .map((_, 1))
             .reduceByKey(_ + _)
             .filter(_._2 > rareTokenThreshold)
-            .collect
-            .map(_._1))
+            .map(_._1)
+            .collect)
 
         new TokenEnumeration(alphabet)
     }

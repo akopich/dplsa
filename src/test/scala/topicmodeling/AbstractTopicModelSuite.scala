@@ -19,10 +19,10 @@ package topicmodeling
 
 
 import org.apache.spark.SparkContext
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 trait AbstractTopicModelSuite[DocumentParameterType <: DocumentParameters,
-GlobalParameterType <: GlobalParameters] extends FunSuite {
+GlobalParameterType <: GlobalParameters] extends AnyFunSuite {
 
     val sc = new SparkContext("local[4]", "test plsa")
 
